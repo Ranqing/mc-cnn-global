@@ -6,10 +6,13 @@
 #include "../../../Qing/qing_common.h"
 #include "../../../Qing/qing_string.h"
 #include "../../../Qing/qing_timer.h"
+#include "../../../Qing/qing_dir.h"
 #include "../../../Qing/qing_file_reader.h"
 #include "../../../Qing/qing_file_writer.h"
 #include "../../../Qing/qing_check.h"
 #include "../../../Qing/qing_macros.h"
+#include "../../../Qing/qing_matching_cost.h"
+#include "../../../Qing/qing_bilateral_filter.h"
 
 class qing_mcost_to_disp {
 public :
@@ -19,15 +22,21 @@ public :
     void read_image(const string filename_l, const string filename_r);
     void read_from_mc_cnn_using_example_code(const string filename_l, const string filename_r);
     void read_from_mc_cnn(const string filename_l, const string filename_r );
-    void mcost_to_disp();
-    void mcost_aggregation(const float sigma_range, const float sigma_spatial) ;
-    void adaptive_weight_filter(float * out, float * in, uchar * bgr_l, uchar * bgr_r,  int d, int h, int w, float sigma_spatial, float sigma_range );
+    void mcost_to_disp(const int scale, const string savename);
+
+    void mcost_aggregation(float sigma_range, float sigma_spatial) ;
+    void adaptive_weight_filter(float *out, float *in, uchar * gray_l, uchar * gray_r, int d, int wnd);
+    //void adaptive_weight_filter(float * out, float * in, uchar * colors_l, uchar * colors_r,  int d, int h, int w, int wnd, float sigma_spatial, float sigma_range );
+
+
+    void directional_mcost_aggregation(float sigma_range, float sigma_spatial);
+    void directional_adaptive_weight_filter(float *out, float *in, uchar * gray_l, uchar * gray_r, int d, int wnd);
 
 private:
     float * m_mcost_l, * m_mcost_r;                                    //matching cost
     float * m_filtered_mcost_l, * m_filtered_mcost_r;                  //filtered matching cost
     uchar * m_image_l, * m_image_r;                                    //left and right image
-    int * m_disp_l, * m_disp_r, * m_disp;                                //disparity image
+    int * m_disp_l, * m_disp_r, * m_disp;                              //disparity image
     int m_total_size, m_image_size;                                    //total_size = d * h * w, image_size = h * w
     int m_d, m_h, m_w, m_channels;                                     //d: disparity_range, h: image height, w: image width
 
@@ -46,12 +55,16 @@ inline qing_mcost_to_disp::qing_mcost_to_disp(const int d, const int h, const in
         cerr << "failed to initial matching cost array." << endl;
         exit(-1);
     }
-    m_filtered_mcost_l = new float[m_total_size];
-    m_filtered_mcost_r = new float[m_total_size];
-    if(0==m_filtered_mcost_l || 0==m_filtered_mcost_r) {
-        cerr << "failed to initial filtered matching cost array." << endl;
-        exit(-1);
-    }
+//initialization in aggregation
+//    m_filtered_mcost_l = new float[m_total_size];
+//    m_filtered_mcost_r = new float[m_total_size];
+//    if(0==m_filtered_mcost_l || 0==m_filtered_mcost_r) {
+//        cerr << "failed to initial filtered matching cost array." << endl;
+//        exit(-1);
+//    }
+    m_filtered_mcost_l = 0;
+    m_filtered_mcost_r = 0;
+
     m_disp_l = new int[m_image_size];
     m_disp_r = new int[m_image_size];
     m_disp = new int[m_image_size];
@@ -120,7 +133,7 @@ inline void qing_mcost_to_disp::read_from_mc_cnn(const string filename_l, const 
     qing_read_bin(filename_l, m_mcost_l, m_total_size) ;
     qing_read_bin(filename_r, m_mcost_r, m_total_size) ;
 
-# if 1
+# if 0
     ////    string prefix = qing_get_file_prefix(filename);
     ////    string out_filename;
     ////    for(int i = 0; i < m_d; ++i) {
@@ -128,10 +141,10 @@ inline void qing_mcost_to_disp::read_from_mc_cnn(const string filename_l, const 
     ////        qing_write_txt(out_filename, m_mcost + i * m_image_size, m_image_size, m_w);
     ////    }
 
-     string out_file_l = getFilePrefix(filename_l) + ".txt";
-     string out_file_r = getFilePrefix(filename_r) + ".txt";
-     qing_write_txt(out_file_l, m_mcost_l, m_total_size, m_h * m_w);
-     qing_write_txt(out_file_r, m_mcost_r, m_total_size, m_h * m_w);
+    string out_file_l = getFilePrefix(filename_l) + ".txt";
+    string out_file_r = getFilePrefix(filename_r) + ".txt";
+    qing_write_txt(out_file_l, m_mcost_l, m_total_size, m_h * m_w);
+    qing_write_txt(out_file_r, m_mcost_r, m_total_size, m_h * m_w);
 # endif
 }
 
@@ -153,10 +166,12 @@ inline void qing_mcost_to_disp::read_from_mc_cnn_using_example_code(const string
     close(fd_r);
 
 # if 0
-     string out_file_l = getFilePrefix(filename_l) + "_example.txt";
-     string out_file_r = getFilePrefix(filename_r) + "_example.txt";
-     qing_write_txt(out_file_l, m_mcost_l, m_total_size, m_h * m_w);
-     qing_write_txt(out_file_r, m_mcost_r, m_total_size, m_h * m_w);
+    qing_create_dir("matching_cost");
+    for(int d = 0; d < m_d; ++d) {
+        float * mcost = m_mcost_l + d * m_image_size;
+        string out_file = "matching_cost/mcost_l_" + qing_int_2_string(d) + ".jpg";
+        qing_save_mcost_jpg(out_file, mcost, m_w, m_h);
+    }
 # endif
 }
 

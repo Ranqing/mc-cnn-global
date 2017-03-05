@@ -2,14 +2,25 @@
 
 int main(int argc, char * argv[]) {
 
-    const string filename_l = "../matching-cost-half/left.bin";
-    const string filename_r = "../matching-cost-half/right.bin";
-    const string imagename_l = "../input/half_kittiL.png";
-    const string imagename_r = "../input/half_kittiR.png";
+//    const string filename_l = "../matching-cost-half/left.bin";
+//    const string filename_r = "../matching-cost-half/right.bin";
+//    const string imagename_l = "../input/half_kittiL.png";
+//    const string imagename_r = "../input/half_kittiR.png";
 
-    int d = 40;
-    int h = 185;
-    int w = 613;
+//    int d = 40;
+//    int h = 185;
+//    int w = 613;
+//    float sigma_range = 0.08;
+//    float sigma_spatial = 0.03;
+
+    const string filename_l = "../matching-cost/left.bin";
+    const string filename_r = "../matching-cost/right.bin";
+    const string imagename_l = "../input/kittiL.png";
+    const string imagename_r = "../input/kittiR.png";
+
+    int d = 70;
+    int h = 370;
+    int w = 1226;
     float sigma_range = 0.08;
     float sigma_spatial = 0.03;
 
@@ -22,12 +33,20 @@ int main(int argc, char * argv[]) {
     solver.read_from_mc_cnn_using_example_code(filename_l, filename_r);
     cout << "loading matching cost.." << timer.duration()*1000 << " ms" << endl;
 
+# if 0
     timer.restart();
     solver.mcost_aggregation(sigma_range, sigma_spatial);
     cout << "matching cost aggregation.." << timer.duration()*1000 << " ms" << endl;
+# endif
 
     timer.restart();
-    solver.mcost_to_disp();
+    solver.directional_mcost_aggregation(sigma_range, sigma_spatial);
+    cout << "directional matching cost aggregation.." << timer.duration()*1000 << " ms" << endl;
+# if 1
+    timer.restart();
+    const int scale = 255/d;
+    solver.mcost_to_disp(scale, "directional_filtered.png");
     cout << "matching cost to disparity.." << timer.duration()*1000 << " ms" << endl;
+# endif
     return 1;
 }
