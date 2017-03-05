@@ -382,9 +382,19 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
     }
     std::fill(min_mcost_x, min_mcost_x + m_total_size, QING_MAX_MCOST);
 
-
+    //generate directions
+    int len_wx = 1;
     double x_directions[1] = {0.0};
-    double y_directions[1] = {0.0};
+    int len_wy = 21, offset_wy = len_wy * 0.5;
+    double wy_step = 0.5;
+    double * y_directions = new double[len_wy];
+    for(int i = -offset_wy, cnt = 0; i <= offset_wy; ++i, ++cnt) {
+        y_directions[cnt] = i * wy_step;
+    }
+//    for(int i = 0;  i < len_wy; ++i) cout << y_directions[i] << endl;
+//    exit(1);
+
+
     double * weights = new double[wnd];       //for each direciton, the weights can be pre-computed
 
     //x-direction filtering
@@ -413,7 +423,7 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
 
                 //compute aggregate matching cost in this horizontal support window of each directions
                 //select the minimum , stored in out[idx], i.e, min_mcost_x[d*m_image_size+idx]
-                for(int wx = 0; wx < 1; ++wx) {
+                for(int wx = 0; wx < len_wx; ++wx) {
                     double x_dir = x_directions[wx];
                     double sum = 0.0;
                     double sum_div = 0.0;
@@ -471,7 +481,7 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
                 //compute aggregate matching cost in this vertical support window of each directions
                 //select the minumum, stored in out[idx], i.e, m_filtered_mcost_l[d*m_image_size+idx]
 
-                for(int wy = 0; wy < 1; ++wy) {
+                for(int wy = 0; wy < len_wy; ++wy) {
                     double y_dir = y_directions[wy];
                     double sum = 0.0;
                     double sum_div = 0.0;
@@ -491,9 +501,9 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
                 }
             }
         }
-# if 0
+# if 1
         qing_create_dir("directional_matching_cost");
-        string out_file = "directional_matching_cost/y_bf_aggregated_mcost_" + qing_int_2_string(d) + ".jpg";
+        string out_file = "directional_matching_cost/y_multi_bf_aggregated_mcost_" + qing_int_2_string(d) + ".jpg";
         qing_save_mcost_jpg(out_file, out, m_w, m_h);
 # endif
     }

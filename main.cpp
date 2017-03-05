@@ -50,7 +50,7 @@ int main(int argc, char * argv[]) {
 # if 1
     timer.restart();
     const int scale = 255/d;
-    solver.mcost_to_disp(scale, "directional_filtered.png");
+    solver.mcost_to_disp(scale, "multi_directional_filtered.png");
     cout << "matching cost to disparity.." << timer.duration()*1000 << " ms" << endl;
 # endif
     return 1;
