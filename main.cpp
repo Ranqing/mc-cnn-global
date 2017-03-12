@@ -21,8 +21,9 @@ int main(int argc, char * argv[]) {
     int d = 70;
     int h = 370;
     int w = 1226;
-    float sigma_range = 0.08;
+    float sigma_range = 0.06;
     float sigma_spatial = 0.03;
+    int wnd = 21;
 
     qing_mcost_to_disp solver(d, h, w);
     QingTimer timer;
@@ -44,13 +45,13 @@ int main(int argc, char * argv[]) {
 
 # if 1
     timer.restart();
-    solver.directional_mcost_aggregation(sigma_range, sigma_spatial);
+    solver.directional_mcost_aggregation(sigma_range, sigma_spatial, wnd);
     cout << "directional matching cost aggregation.." << timer.duration()*1000 << " ms" << endl;
 # endif
 # if 1
     timer.restart();
     const int scale = 255/d;
-    solver.mcost_to_disp(scale, "multi_directional_filtered.png");
+    solver.mcost_to_disp(scale, "_disp.png");
     cout << "matching cost to disparity.." << timer.duration()*1000 << " ms" << endl;
 # endif
     return 1;

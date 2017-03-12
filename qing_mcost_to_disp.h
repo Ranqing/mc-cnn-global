@@ -30,7 +30,7 @@ public :
     //void adaptive_weight_filter(float * out, float * in, uchar * colors_l, uchar * colors_r,  int d, int h, int w, int wnd, float sigma_spatial, float sigma_range );
 
 
-    void directional_mcost_aggregation(float sigma_range, float sigma_spatial);
+    void directional_mcost_aggregation(float sigma_range, float sigma_spatial, const int wnd);
     void directional_adaptive_weight_filter(float *out, float *in, uchar * gray_l, uchar * gray_r, int d, int wnd);
 
 private:

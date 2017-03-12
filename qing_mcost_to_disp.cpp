@@ -188,183 +188,20 @@ void qing_mcost_to_disp::directional_adaptive_weight_filter(float *out, float *i
 
 }
 
-//void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float sigma_spatial) {
 
-//    cout << "start to aggregate matching cost with direction params" << endl;
-//    sigma_range *= QING_FILTER_INTENSITY_RANGE;
-//    sigma_spatial *= (float)min((float)m_h,(float)m_w);
-//    //support window
-//    int wnd = (2*(int)(sigma_spatial+0.5f)) + 1;
-//    int offset = wnd * 0.5;
-
-//    m_range_table = qing_get_range_weighted_table(sigma_range, QING_FILTER_INTENSITY_RANGE);
-//    m_spatial_table = qing_get_spatial_weighted_table(sigma_spatial, wnd);
-
-//    uchar * gray_l = m_image_l;
-//    uchar * gray_r = m_image_r;
-
-//    //final filtered results
-//    m_filtered_mcost_l = new float[m_total_size];
-//    if(0==m_filtered_mcost_l) {
-//        cerr << "failed to initial left filtered matching cost array." << endl;
-//        exit(-1);
-//    }
-//    //   memset(m_filtered_mcost_l, QING_MAX_MCOST, sizeof(float)*m_total_size); set value each byte
-//    std::fill(m_filtered_mcost_l, m_filtered_mcost_l + m_total_size, QING_MAX_MCOST);
-
-//    //minimum matching cost in x-direction
-//    float * min_mcost_x = new float[m_total_size];
-//    if(0==min_mcost_x) {
-//        cerr << "failed to initial intermediate matching cost array in x-direction" << endl;
-//        exit(-1);
-//    }
-//    //    memset(min_mcost_x, QING_MAX_MCOST, sizeof(float)*m_total_size);
-//    std::fill(min_mcost_x, min_mcost_x + m_total_size, QING_MAX_MCOST);
-
-//    double x_directions[5] = {-0.02, -0.01, 0, 0.01, 0.02};
-//    double y_directions[5] = {-0.02, -0.01, 0, 0.01, 0.02};
-
-//    //x-direction
-//    //in: m_mcost_l
-//    //out:min_mcost_x
-//    cout << QING_DEBUG_FLAG_STRING << "\t horizontal filtering start.." << endl;
-//    double * weights = new double[wnd+4];
-
-//    for(int d = 30; d < m_d; ++d) {
-//        float * out = min_mcost_x + d * m_image_size;
-//        cout << "d = " << d << endl;
-
-//        for(int y = 0; y < m_h; ++y) {
-//            int idy = y * m_w;
-//            for(int x = 0; x < m_w; ++x) {
-//                int idx = idy + x;
-
-//                //compute aggregate x-directional minimum matching cost: min_mcost_x[d*m_image_size + idx];
-
-//                unsigned char * ptr_gray_c = gray_l + idx - 1;
-//                unsigned char gray_c = *(++ptr_gray_c);
-
-//                //pre-compute weights for the neighbors
-//                //memset(weights, 0, sizeof(double)*(wnd+4));
-//                std::fill(weights, weights + wnd, 0.0);
-//                for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
-//                    if(x+k < 0 || x+k >= m_w) continue;
-//                    int idk = idx + k;
-//                    unsigned char * ptr_gray_k = gray_l + idk - 1;
-//                    int delta_pq = abs(gray_c - *(++ptr_gray_k));
-//                    weights[tk] = m_range_table[delta_pq] * m_spatial_table[abs(k)];
-//                }
-//                //                cout << QING_DEBUG_FLAG_STRING ;
-//                //                for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
-//                //                    cout << weights[tk] << ' ';
-//                //                }
-//                //                cout << endl;
-//                //                exit(1);
-
-//                //aggregate initial matching cost in x-direction with a direction param
-//                //select the minimum x-aggregated matching cost, saving in out[idx]
-//                //for(int wx = 0; wx < 5; ++wx) {
-//                for(int wx = 2; wx <= 2; ++wx) {
-//                    float x_dir = x_directions[wx];
-//                    cout << "x_dir = " << x_dir << endl;
-//                    float sum = 0.f;
-//                    float sum_div = 0.f;
-//                    for(int k = -offset, tk = 0; k <=offset; ++tk, ++k) {
-//                        int k_d = d + x_dir * k;
-//                        cout << "d+delta_d=" << k_d << endl;
-//                        int idk = idx + k;
-//                        if(k_d < 0 || k_d >= m_d) continue;
-
-//                        sum += weights[tk] * (*(m_mcost_l + k_d * m_image_size + idk));
-//                        sum_div += weights[tk];
-//                        cout << k << '\t' << tk << "\t: sum = " << sum << "\t sum_div = " << sum_div << "\t weight = " << weights[tk] << endl;
-//                    }
-//                    if(sum_div > 0.0000001)  sum /= sum_div;
-//                    if(out[idx] > sum) out[idx] = sum;
-//                }
-//                exit(1);
-//            }
-//        }
-//# if 1
-//        qing_create_dir("./directional_matching_cost/");
-//        string out_file = "./directional_matching_cost/directional_mcost_x_" + qing_int_2_string(d) + ".jpg";
-//        qing_save_mcost_jpg(out_file, out, m_w, m_h);
-//# endif
-//    }
-//    cout << QING_DEBUG_FLAG_STRING << "\t horizontal filtering done.." << endl;
-
-
-//    //y-direction
-//    //in: min_mcost_x
-//    //out: m_filtered_mcost_x
-//    cout << QING_DEBUG_FLAG_STRING << "\t vertical filtering start.." << endl;
-//    for(int d = 0; d < m_d; ++d) {
-//        float * out = m_filtered_mcost_l + d * m_image_size;
-//        cout << "d = " << d << endl;
-
-//        for(int y = 0; y < m_h; ++y) {
-//            int idy = y * m_w;
-//            for(int x = 0; x < m_w; ++x) {
-//                int idx = idy + x;
-
-//                //compute aggregate y-directional minimum matching cost: m_filtered_mcost[d*m_image_size+idx]
-
-//                unsigned char * ptr_gray_c = gray_l + idx - 1;
-//                unsigned char gray_c = *(++ptr_gray_c);
-
-//                //pre_compute weights for neigbhors
-//                //memset(weights, 0, sizeof(double)*(wnd+4));
-//                std::fill(weights, weights + wnd, 0.0);
-//                for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
-//                    if(y+k < 0 || y+k>=m_h) continue;
-//                    int idk = idx + k * m_w;
-
-//                    unsigned char * ptr_gray_k = gray_l + idk - 1;
-//                    int delta_pq = abs(gray_c - *(++ptr_gray_k));
-//                    weights[tk] = m_range_table[delta_pq] * m_spatial_table[abs(k)];
-//                }
-
-//                //aggregate initial matching cost in y-direction with a direction param
-//                //select the minimum y-aggegate matching cost, saving in out[idx]
-//               // for(int wy = 0; wy < 5; ++wy) {
-//                for(int wy = 2; wy <= 2; ++wy) {
-//                    float y_dir = y_directions[wy];
-//                    float sum = 0.0f;
-//                    float sum_div = 0.0f;
-//                    for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
-//                        if(y+k < 0 || y+k>=m_h) continue;
-//                        int idk = idx + k * m_w;
-//                        int k_d = d + y_dir * k;
-//                        if(k_d < 0 || k_d >= m_d) continue;
-
-//                        sum += weights[tk] * (*(min_mcost_x + k_d * m_image_size + idk));
-//                        sum_div += weights[tk];
-//                    }
-
-//                    if(sum_div > 0.000001) sum /= sum_div;
-//                    if(out[idx] > sum) out[idx] = sum;
-//                }
-//            }
-//        }
-//# if 1
-//        qing_create_dir("./directional_matching_cost/");
-//        string out_file = "./directional_matching_cost/directional_mcost_xy_" + qing_int_2_string(d) + ".jpg";
-//        qing_save_mcost_jpg(out_file, out, m_w, m_h);
-//# endif
-//    }
-//    cout << QING_DEBUG_FLAG_STRING << "\t vertical filtering done.." << endl;
-
-//}
-
-void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float sigma_spatial) {
+void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float sigma_spatial, const int wnd) {
     cout << "test directional mcost aggregation with zero direction params.." << endl;
 
     sigma_range *= QING_FILTER_INTENSITY_RANGE;
     sigma_spatial *= min(m_w, m_h);
-    int wnd = 2 * ((int)(sigma_spatial+0.5f)) + 1;
+    //int wnd = 2 * ((int)(sigma_spatial+0.5f)) + 1;
     int offset = wnd * 0.5;
     m_range_table = qing_get_range_weighted_table(sigma_range, QING_FILTER_INTENSITY_RANGE);
-    m_spatial_table = qing_get_spatial_weighted_table(sigma_spatial, wnd);
+    m_spatial_table = qing_get_spatial_weighted_table(sigma_spatial, QING_FILTER_SPATIAL_RANGE);
+
+    cout << "sigma_range = " << sigma_range << endl;
+    cout << "sigma_spatial = " << sigma_spatial << endl;
+    cout << "wnd = " << wnd << endl;
 
     uchar * gray_l = m_image_l;
     uchar * gray_r = m_image_r;
@@ -383,61 +220,74 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
     std::fill(min_mcost_x, min_mcost_x + m_total_size, QING_MAX_MCOST);
 
     //generate directions
-    int len_wx = 1;
-    double x_directions[1] = {0.0};
-    int len_wy = 21, offset_wy = len_wy * 0.5;
-    double wy_step = 0.5;
-    double * y_directions = new double[len_wy];
-    for(int i = -offset_wy, cnt = 0; i <= offset_wy; ++i, ++cnt) {
-        y_directions[cnt] = i * wy_step;
-    }
-//    for(int i = 0;  i < len_wy; ++i) cout << y_directions[i] << endl;
-//    exit(1);
-
+    int len_wx = 21;
+    float wx_step = 1.f/(len_wx/2);
+    float * x_directions  =  qing_get_directions(wx_step, len_wx);
+# if 1
+    for(int len = 0; len < len_wx; ++len) cout << x_directions[len] << ' ';
+    cout << endl;
+# endif
+    int len_wy = 21;
+    float wy_step = 1.f/(len_wy/2);
+    float * y_directions  =  qing_get_directions(wy_step, len_wy);
+# if 1
+    for(int len = 0; len < len_wy; ++len) cout << y_directions[len] << ' ';
+    cout << endl;
+# endif
 
     double * weights = new double[wnd];       //for each direciton, the weights can be pre-computed
+    double sum, sum_div, x_dir, y_dir;
+    unsigned char * ptr_gray_c, * ptr_gray_k;
+    unsigned char gray_c;
+    int idy, idx, idk, delta_pq;
+
+    QingTimer timer;
 
     //x-direction filtering
-    cout << QING_DEBUG_FLAG_STRING << "\t horizontal filtering start.." << endl;
+    cout << "horizontal filtering start.." << endl;
 
     for(int d = 0; d < m_d; ++d) {
         float * out = min_mcost_x + d * m_image_size;
-        cout << "d = " << d << endl;
+        cout << "d = " << d ; timer.restart();
 
         for(int y = 0; y < m_h; ++y) {
-            int idy = y * m_w;
+            idy = y * m_w;
             for(int x = 0; x < m_w; ++x) {
-                int idx = idy + x;
+                idx = idy + x;
 
-                unsigned char * ptr_gray_c = gray_l + idx - 1;
-                unsigned char gray_c = *(++ptr_gray_c);
+                ptr_gray_c = gray_l + idx - 1;
+                gray_c = *(++ptr_gray_c);
 
                 std::fill(weights, weights + wnd, 0.0);
                 for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
                     if(x+k < 0 || x+k >= m_w) continue;
-                    int idk = idx + k;
-                    unsigned char * ptr_gray_k = gray_l + idk - 1;
-                    int delta_pq = abs(gray_c - *(++ptr_gray_k));
+                    idk = idx + k;
+
+                    ptr_gray_k = gray_l + idk - 1;
+                    delta_pq = abs(gray_c - *(++ptr_gray_k));
                     weights[tk] = m_range_table[delta_pq] * m_spatial_table[abs(k)];
                 }
 
                 //compute aggregate matching cost in this horizontal support window of each directions
                 //select the minimum , stored in out[idx], i.e, min_mcost_x[d*m_image_size+idx]
                 for(int wx = 0; wx < len_wx; ++wx) {
-                    double x_dir = x_directions[wx];
-                    double sum = 0.0;
-                    double sum_div = 0.0;
+                    x_dir = x_directions[wx];
+                    sum = 0.0;
+                    sum_div = 0.0;
+
                     for(int k = -offset, tk = 0; k<=offset; ++tk,++k) {
                         if(x+k < 0 || x+k >= m_w) continue;
-                        int idk = idx + k;
-                        int delta_d = x_dir * k;
-                        int k_d = d + delta_d;
-                        if(k_d < 0 || k_d >= m_d) continue;
+                        idk = idx + k;
+
+                        int k_d = d + x_dir * k;
+//                        if(k_d < 0 || k_d >= m_d) continue;
+                        k_d = max(0,k_d);
+                        k_d = min(k_d, m_d-1);
 
                         sum += weights[tk] * (*(m_mcost_l + k_d * m_image_size + idk));
                         sum_div += weights[tk];
-//                        if(x == 30)
-//                            cout << "x = " << x << " sum = " << sum << ", sum_div = " << sum_div << endl;
+                        //                        if(x == 30)
+                        //                            cout << "x = " << x << " sum = " << sum << ", sum_div = " << sum_div << endl;
                     }
                     //if(x==30)  exit(1);
                     if(sum_div >= 0.000001) sum/=sum_div;
@@ -445,36 +295,40 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
                 }
             }
         }
+        cout << "\t duration = " << timer.duration() * 1000 << " ms." << endl;
 
 # if 0
-        qing_create_dir("directional_matching_cost");
-        string out_file = "directional_matching_cost/x_bf_aggregated_mcost_" + qing_int_2_string(d) + ".jpg";
+        qing_create_dir("aggr_matching_cost");
+        string out_file = "aggr_matching_cost/x_mcost_" + qing_int_2_string(d) + ".jpg";
         qing_save_mcost_jpg(out_file, out, m_w, m_h);
+        string out_txt_file = "aggr_matching_cost/x_mcost_" + qing_int_2_string(d) + ".txt";
+        qing_save_mcost_txt(out_txt_file, out, m_image_size, m_w);
 # endif
     }
 
-    cout << QING_DEBUG_FLAG_STRING << "\t horizontal filtering end..." << endl;
+    cout << "horizontal filtering end..." << endl;
 
     //y-directoin filtering
-    cout << QING_DEBUG_FLAG_STRING << "\t vertical filtering start..." << endl;
+    cout << "vertical filtering start..." << endl;
     for(int d = 0; d < m_d; ++d) {
         float * out = m_filtered_mcost_l + d * m_image_size;
-        cout << "d = " << d << endl;
+        cout << "d = " << d ; timer.restart();
 
         for(int y = 0; y < m_h; ++y) {
-            int idy = y * m_w;
+            idy = y * m_w;
             for(int x = 0; x < m_w; ++x) {
-                int idx = idy + x;
+                idx = idy + x;
 
-                unsigned char * ptr_gray_c = gray_l + idx - 1;
-                unsigned char gray_c = *(++ptr_gray_c);
+                ptr_gray_c = gray_l + idx - 1;
+                gray_c = *(++ptr_gray_c);
 
                 std::fill(weights, weights+wnd, 0.0);
                 for(int k = -offset, tk = 0; k <= offset; ++tk, ++k) {
                     if(y+k < 0 || y+k >= m_h) continue;
-                    int idk = idx + k * m_w;
-                    unsigned char * ptr_gray_k = gray_l + idk - 1;
-                    int delta_pq = abs(gray_c - *(++ptr_gray_k));
+
+                    idk = idx + k * m_w;
+                    ptr_gray_k = gray_l + idk - 1;
+                    delta_pq = abs(gray_c - *(++ptr_gray_k));
                     weights[tk] = m_range_table[delta_pq] * m_spatial_table[abs(k)];
                 }
 
@@ -482,15 +336,16 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
                 //select the minumum, stored in out[idx], i.e, m_filtered_mcost_l[d*m_image_size+idx]
 
                 for(int wy = 0; wy < len_wy; ++wy) {
-                    double y_dir = y_directions[wy];
-                    double sum = 0.0;
-                    double sum_div = 0.0;
+                    y_dir = y_directions[wy];
+                    sum = 0.0;
+                    sum_div = 0.0;
                     for(int k = -offset, tk = 0; k<=offset; ++tk, ++k) {
                         if(y+k < 0 || y+k >= m_w) continue;
-                        int idk = idx + k * m_w;
-                        int delta_d = y_dir * k;
-                        int k_d = d + delta_d;
-                        if(k_d < 0 || k_d >= m_d) continue;
+                        idk = idx + k * m_w;
+                        int k_d = d + y_dir * k;
+                       // if(k_d < 0 || k_d >= m_d) continue;
+                        k_d = max(0,k_d);
+                        k_d = min(k_d, m_d-1);
 
                         sum += weights[tk] * (*(min_mcost_x + k_d * m_image_size + idk));
                         sum_div += weights[tk];
@@ -501,14 +356,17 @@ void qing_mcost_to_disp::directional_mcost_aggregation(float sigma_range, float 
                 }
             }
         }
-# if 1
-        qing_create_dir("directional_matching_cost");
-        string out_file = "directional_matching_cost/y_multi_bf_aggregated_mcost_" + qing_int_2_string(d) + ".jpg";
+          cout << "\t duration = " << timer.duration() * 1000 << " ms." << endl;
+# if 0
+        qing_create_dir("aggr_matching_cost");
+        string out_file = "aggr_matching_cost/y_mcost_" + qing_int_2_string(d) + ".jpg";
         qing_save_mcost_jpg(out_file, out, m_w, m_h);
+        string out_txt_file = "aggr_matching_cost/y_mcost_" + qing_int_2_string(d) + ".txt";
+        qing_save_mcost_txt(out_txt_file, out, m_image_size, m_w);
 # endif
     }
 
-    cout << QING_DEBUG_FLAG_STRING << "\t vertial filtering end...." << endl;
+    cout << "vertial filtering end...." << endl;
 }
 
 
@@ -552,8 +410,8 @@ void qing_mcost_to_disp::mcost_to_disp(const int scale, const string savename) {
     Mat right_disp(m_h, m_w, CV_8UC1);
     memcpy(right_disp.data, m_disp_r, sizeof(unsigned char)*m_image_size);
     cout << "save ./left_" << savename << endl; imwrite("./left_" + savename,  left_disp);
-    cout << "save ./disp_" << savename << endl; imwrite("./disp_" + savename,  left_disp);
-    cout << "save ./right_" << savename << endl; imwrite("./right_" + savename, right_disp);
+//    cout << "save ./disp_" << savename << endl; imwrite("./disp_" + savename,  left_disp);
+//    cout << "save ./right_" << savename << endl; imwrite("./right_" + savename, right_disp);
 # endif
 }
 
