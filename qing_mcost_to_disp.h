@@ -14,6 +14,8 @@
 #include "../../../Qing/qing_matching_cost.h"
 #include "../../../Qing/qing_bilateral_filter.h"
 
+#define STEREO_RIGHT 1
+
 class qing_mcost_to_disp {
 public :
     qing_mcost_to_disp(const int d, const int h, const int w) ;
@@ -23,15 +25,14 @@ public :
     void read_from_mc_cnn_using_example_code(const string filename_l, const string filename_r);
     void read_from_mc_cnn(const string filename_l, const string filename_r );
     void remove_mcost_nan();
+    void get_weighted_table(float sigma_range, float sigma_spatial);
     void mcost_to_disp(const int scale, const string savename);
 
-    void mcost_aggregation(float sigma_range, float sigma_spatial) ;
+    void mcost_aggregation(const int wnd);
     void adaptive_weight_filter(float *out, float *in, uchar * gray_l, uchar * gray_r, int d, int wnd);
-    //void adaptive_weight_filter(float * out, float * in, uchar * colors_l, uchar * colors_r,  int d, int h, int w, int wnd, float sigma_spatial, float sigma_range );
+    void directional_mcost_aggregation(const int wnd);
 
-
-    void directional_mcost_aggregation(float sigma_range, float sigma_spatial, const int wnd);
-    void directional_adaptive_weight_filter(float *out, float *in, uchar * gray_l, uchar * gray_r, int d, int wnd);
+    void save_filtered_mcost(const string folder);
 
 private:
     float * m_mcost_l, * m_mcost_r;                                    //matching cost
@@ -195,6 +196,15 @@ inline void qing_mcost_to_disp::remove_mcost_nan() {
         }
     }
     cout << cnt << " nan..." << endl;
+}
+
+inline void qing_mcost_to_disp::get_weighted_table(float sigma_range, float sigma_spatial) {
+    sigma_range *= QING_FILTER_INTENSITY_RANGE;
+    sigma_spatial *= min(m_w, m_h);
+    cout << "sigma_range = " << sigma_range << endl;
+    cout << "sigma_spatial = " << sigma_spatial << endl;
+    m_range_table = qing_get_range_weighted_table(sigma_range, QING_FILTER_INTENSITY_RANGE);
+    m_spatial_table = qing_get_spatial_weighted_table(sigma_spatial, QING_FILTER_SPATIAL_RANGE);
 }
 
 

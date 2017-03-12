@@ -32,26 +32,26 @@ int main(int argc, char * argv[]) {
 
     timer.restart();
     solver.read_from_mc_cnn_using_example_code(filename_l, filename_r);
-    // solver.read_from_mc_cnn(filename_l, filename_r);
-
     solver.remove_mcost_nan();
     cout << "loading matching cost.." << timer.duration()*1000 << " ms" << endl;
 
+    solver.get_weighted_table(sigma_range, sigma_spatial);
+    cout << "weighted table calculation done..." << endl;
+
 # if 0
     timer.restart();
-    solver.mcost_aggregation(sigma_range, sigma_spatial);
+    solver.mcost_aggregation(wnd);
     cout << "matching cost aggregation.." << timer.duration()*1000 << " ms" << endl;
 # endif
 
 # if 1
     timer.restart();
-    solver.directional_mcost_aggregation(sigma_range, sigma_spatial, wnd);
+    solver.directional_mcost_aggregation(wnd);
     cout << "directional matching cost aggregation.." << timer.duration()*1000 << " ms" << endl;
-# endif
-# if 1
+    qing_create_dir("qing-matching-cost");
+    solver.save_filtered_mcost("qing-matching-cost");
     timer.restart();
-    const int scale = 255/d;
-    solver.mcost_to_disp(scale, "_disp.png");
+    solver.mcost_to_disp(255/d, "disp.png");
     cout << "matching cost to disparity.." << timer.duration()*1000 << " ms" << endl;
 # endif
     return 1;
