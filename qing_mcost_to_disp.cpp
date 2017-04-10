@@ -148,6 +148,7 @@ void qing_mcost_to_disp::directional_mcost_aggregation(const int wnd) {
     }
     std::fill(min_mcost_x, min_mcost_x + m_total_size, QING_MAX_MCOST);
     qing_directional_bf_mcost_aggregation(m_filtered_mcost_l, m_mcost_l, min_mcost_x, gray_l, m_w, m_h, m_d, wnd, m_range_table, m_spatial_table, directions, len);
+ //   qing_directional_aw_mcost_aggregation_l(m_filtered_mcost_l, m_mcost_l, min_mcost_x, gray_l, gray_r, m_w, m_h, m_d, wnd, m_range_table, m_spatial_table, directions, len);
 
 # if STEREO_RIGHT
     m_filtered_mcost_r = new float[m_total_size];

@@ -14,7 +14,7 @@
 #include "../../../Qing/qing_matching_cost.h"
 #include "../../../Qing/qing_bilateral_filter.h"
 
-#define STEREO_RIGHT 0
+#define STEREO_RIGHT 1
 
 class qing_mcost_to_disp {
 public :
@@ -22,9 +22,12 @@ public :
     ~qing_mcost_to_disp() ;
 
     void read_image(const string filename_l, const string filename_r);
+
     void read_from_mc_cnn_using_example_code(const string filename_l, const string filename_r);
     void read_from_mc_cnn(const string filename_l, const string filename_r );
+    void read_from_mc_cnn_cmp(const string filename_l, const string filename_r);
     void remove_mcost_nan();
+
     void get_weighted_table(float sigma_range, float sigma_spatial);
     void mcost_to_disp(const int scale, const string savename);
 
@@ -160,6 +163,26 @@ inline void qing_mcost_to_disp::read_from_mc_cnn(const string filename_l, const 
 # endif
 }
 
+inline void qing_mcost_to_disp::read_from_mc_cnn_cmp(const string filename_l, const string filename_r) {
+    bool flag = false;
+    float * temp_mcost_l = new float[m_total_size];
+    qing_read_bin(filename_l, temp_mcost_l, m_total_size);
+    for(int i = 0; i < m_total_size; ++i) {
+        if(qing_is_nan(temp_mcost_l[i])==false && temp_mcost_l[i] < m_mcost_l[i]) {
+            m_mcost_l[i] = temp_mcost_l[i];
+            if(flag==false) {cout<<"HHH"<<endl;flag=true;}
+        }
+    }
+# if STEREO_RIGHT
+    qing_read_bin(filename_r, temp_mcost_l, m_total_size);
+    for(int i = 0; i < m_total_size; ++i) {
+        if(qing_is_nan(temp_mcost_l[i])==false && temp_mcost_l[i] < m_mcost_r[i]) {
+            m_mcost_r[i] = temp_mcost_l[i];
+        }
+    }
+# endif
+}
+
 inline void qing_mcost_to_disp::read_from_mc_cnn_using_example_code(const string filename_l, const string filename_r) {
     m_mcost_l = new float[m_total_size];
     if(0==m_mcost_l) {
@@ -194,14 +217,16 @@ inline void qing_mcost_to_disp::read_from_mc_cnn_using_example_code(const string
 }
 
 inline void qing_mcost_to_disp::save_filtered_mcost(const string folder) {
-    string filename = folder + "/left.txt" ;
-    qing_save_mcost_vol(filename, m_filtered_mcost_l, m_d, m_h, m_w);
+    string filename;
+
+//    filename = folder + "/left.txt" ;
+//    qing_save_mcost_vol(filename, m_filtered_mcost_l, m_d, m_h, m_w);
     filename = folder + "/left.bin";
     qing_write_bin(filename, m_filtered_mcost_l, m_total_size);
 
 # if STEREO_RIGHT
-    filename = folder + "/right.txt";
-    qing_save_mcost_vol(filename, m_filtered_mcost_r, m_d, m_h, m_w);
+//    filename = folder + "/right.txt";
+//    qing_save_mcost_vol(filename, m_filtered_mcost_r, m_d, m_h, m_w);
     filename = folder + "/right.bin";
     qing_write_bin(filename, m_filtered_mcost_r, m_total_size);
 # endif
